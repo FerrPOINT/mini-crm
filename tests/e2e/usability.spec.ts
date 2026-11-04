@@ -89,7 +89,7 @@ test('LAYOUT: left back link, readable table, themes persist and mobile navigati
     const titleCell = page.getByRole('cell', { name: task.title, exact: true });
     expect((await titleCell.boundingBox())!.width).toBeGreaterThan(150);
     await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click();
-    const drawer = page.getByRole('dialog', { name: 'Основная навигация', exact: true });
+    const drawer = page.getByRole('dialog', { name: 'Стройка', exact: true });
     await drawer.getByRole('link', { name: 'Объекты', exact: true }).click();
     await expect(drawer).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Объекты', exact: true })).toBeVisible();

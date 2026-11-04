@@ -13,6 +13,7 @@ export function SiteForm({ site, onClose }: { site?: Site; onClose: () => void }
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    save.reset();
     const data = new FormData(event.currentTarget);
     const values = {
       name: String(data.get('name')).trim(),
@@ -112,6 +113,7 @@ export function TaskForm({
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    save.reset();
     const data = new FormData(event.currentTarget);
     const title = String(data.get('title')).trim();
     if (!title) {

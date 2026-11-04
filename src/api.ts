@@ -1,11 +1,28 @@
 import { db } from './supabase';
 import type { HistoryEntry, Profile, Site, Status, Task } from './domain';
 
-function result<T>({ data, error }: { data: T; error: { message: string } | null }): T {
-  if (error) throw new Error(error.message);
+function result<T>({
+  data,
+  error,
+  status,
+}: {
+  data: T;
+  error: { message: string } | null;
+  status?: number;
+}): T {
+  if (error)
+    throw new Error(
+      status === 0
+        ? 'Не удалось связаться с сервером. Проверьте соединение и повторите попытку.'
+        : error.message,
+    );
   return data;
 }
-function row<T>(response: { data: T | null; error: { message: string } | null }): T {
+function row<T>(response: {
+  data: T | null;
+  error: { message: string } | null;
+  status?: number;
+}): T {
   const data = result(response);
   if (data === null) throw new Error('Запись не найдена или недоступна');
   return data;
