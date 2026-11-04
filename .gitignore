@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.local/
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
+.sites-runtime/
+test-results/
+playwright-report/
+*.log

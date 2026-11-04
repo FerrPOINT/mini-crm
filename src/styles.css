@@ -1,0 +1,105 @@
+@import 'tailwindcss';
+@import '@pdlc/ui/tokens.css';
+@import '@pdlc/ui/fonts.css';
+@source "../node_modules/@pdlc/ui/src";
+
+html {
+  min-width: 320px;
+}
+body {
+  margin: 0;
+}
+.workspace {
+  max-width: 1440px;
+  margin-inline: auto;
+  display: grid;
+  gap: 1.5rem;
+}
+.login-page {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+}
+.login-card {
+  width: min(100%, 27rem);
+}
+.login-theme {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+.brand-line {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+.form-stack {
+  display: grid;
+  gap: 1.25rem;
+}
+.site-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+  gap: 1.25rem;
+}
+.task-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+.task-facts {
+  margin: 0 0 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+.task-facts > div {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+}
+.task-facts dt,
+.muted {
+  color: var(--color-text-muted);
+}
+.task-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.task-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+.history-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.history-heading time {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+@media (max-width: 960px) {
+  .task-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .task-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+}
