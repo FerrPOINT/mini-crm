@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { ArrowLeft } from 'lucide-react';
 import {
@@ -79,6 +79,9 @@ export function FormModal({
   pending: boolean;
   onClose: () => void;
 }) {
+  const opener = useRef(
+    document.activeElement instanceof HTMLElement ? document.activeElement : null,
+  );
   return (
     <Dialog
       open
@@ -87,6 +90,8 @@ export function FormModal({
       }}
     >
       <DialogContent
+        returnFocusRef={opener}
+        closeDisabled={pending}
         onEscapeKeyDown={(event) => {
           if (pending) event.preventDefault();
         }}
