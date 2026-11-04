@@ -292,7 +292,11 @@ function TaskDetails({ taskId }: { taskId: string }) {
       setHistoryPage(0);
     },
     onError: async () => {
-      await client.invalidateQueries({ queryKey: ['task', taskId] });
+      setHistoryPage(0);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['task', taskId] }),
+        client.invalidateQueries({ queryKey: ['history', taskId] }),
+      ]);
     },
   });
   const deletion = useMutation({

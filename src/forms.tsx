@@ -6,6 +6,7 @@ import type { Site, Task } from './domain';
 import { FormModal, SaveActions } from './components';
 
 export function SiteForm({ site, onClose }: { site?: Site; onClose: () => void }) {
+  const [errors, setErrors] = useState<{ name?: string; address?: string }>({});
   const save = useMutation({
     mutationFn: (values: Pick<Site, 'name' | 'address'>) => api.saveSite(values, site?.id),
     onSuccess: onClose,
@@ -13,10 +14,21 @@ export function SiteForm({ site, onClose }: { site?: Site; onClose: () => void }
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    save.mutate({
+    const values = {
       name: String(data.get('name')).trim(),
       address: String(data.get('address')).trim(),
-    });
+    };
+    const errors = {
+      name: values.name ? undefined : 'Укажите название объекта.',
+      address: values.address ? undefined : 'Укажите адрес объекта.',
+    };
+    setErrors(errors);
+    if (errors.name || errors.address) {
+      const field = event.currentTarget.elements.namedItem(errors.name ? 'name' : 'address');
+      if (field instanceof HTMLElement) field.focus();
+      return;
+    }
+    save.mutate(values);
   }
   return (
     <FormModal
@@ -26,24 +38,26 @@ export function SiteForm({ site, onClose }: { site?: Site; onClose: () => void }
       onClose={onClose}
     >
       <form className="form-stack" onSubmit={submit}>
-        <FormField id="site-name" label="Название" required>
+        <FormField id="site-name" label="Название" required error={errors.name}>
           {(attrs) => (
             <Input
               {...attrs}
               name="name"
               defaultValue={site?.name}
+              onChange={() => setErrors((current) => ({ ...current, name: undefined }))}
               maxLength={200}
               disabled={save.isPending}
               autoFocus
             />
           )}
         </FormField>
-        <FormField id="site-address" label="Адрес" required>
+        <FormField id="site-address" label="Адрес" required error={errors.address}>
           {(attrs) => (
             <Textarea
               {...attrs}
               name="address"
               defaultValue={site?.address}
+              onChange={() => setErrors((current) => ({ ...current, address: undefined }))}
               maxLength={500}
               disabled={save.isPending}
               rows={2}
@@ -65,6 +79,7 @@ export function TaskForm({
   site: Site;
   onClose: () => void;
 }) {
+  const [titleError, setTitleError] = useState<string>();
   const [siteId, setSiteId] = useState(task?.site_id ?? site.id);
   const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? '');
   const [siteSearch, setSiteSearch] = useState('');
@@ -98,8 +113,15 @@ export function TaskForm({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const title = String(data.get('title')).trim();
+    if (!title) {
+      setTitleError('Укажите название задачи.');
+      const field = event.currentTarget.elements.namedItem('title');
+      if (field instanceof HTMLElement) field.focus();
+      return;
+    }
     save.mutate({
-      title: String(data.get('title')).trim(),
+      title,
       description: String(data.get('description')).trim(),
       site_id: siteId,
       assignee_id: assigneeId,
@@ -113,12 +135,13 @@ export function TaskForm({
       onClose={onClose}
     >
       <form className="form-stack" onSubmit={submit}>
-        <FormField id="task-title" label="Название" required>
+        <FormField id="task-title" label="Название" required error={titleError}>
           {(attrs) => (
             <Input
               {...attrs}
               name="title"
               defaultValue={task?.title}
+              onChange={() => setTitleError(undefined)}
               maxLength={200}
               disabled={save.isPending}
               autoFocus

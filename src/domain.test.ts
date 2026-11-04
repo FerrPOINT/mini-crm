@@ -17,6 +17,18 @@ const task: Task = {
   site: { name: 'Стройка' },
 };
 describe('visible task actions', () => {
+  it.each([
+    ['new', [], ['in_progress']],
+    ['in_progress', [], ['in_review']],
+    ['in_review', ['accepted', 'rework'], []],
+    ['rework', [], ['in_progress']],
+    ['accepted', [], []],
+  ] as const)('matches the role matrix in %s', (status, forManager, forExecutor) => {
+    const current = { ...task, status };
+    expect(availableActions(current, manager).map((action) => action.status)).toEqual(forManager);
+    expect(availableActions(current, executor).map((action) => action.status)).toEqual(forExecutor);
+    expect(availableActions(current, { ...executor, id: 'another-executor' })).toEqual([]);
+  });
   it('offers only assigned executor transitions', () => {
     expect(availableActions(task, executor).map((action) => action.status)).toEqual([
       'in_progress',
