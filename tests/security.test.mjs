@@ -152,8 +152,9 @@ test('all six permitted transitions and authoritative audit attribution', async 
   const task = await makeTask();
   checked(await transition(executor1, task.id, 'new', 'in_progress', 'Начинаю'));
   checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
-  await denied(transition(manager, task.id, 'in_review', 'rework', '   '));
-  checked(await transition(manager, task.id, 'in_review', 'rework', 'Исправить крепления'));
+  for (const blank of [null, '', '   ', '\t\n\r '])
+    await denied(transition(manager, task.id, 'in_review', 'rework', blank));
+  checked(await transition(manager, task.id, 'in_review', 'rework', ' \tИсправить крепления\r\n'));
   checked(await transition(executor1, task.id, 'rework', 'in_progress'));
   checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
   checked(await transition(manager, task.id, 'in_review', 'accepted'));
