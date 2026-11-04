@@ -13,6 +13,7 @@ test('AUTH: invalid credentials, session reload, logout and role isolation', asy
   page,
   crm,
 }) => {
+  const privateSite = await crm.site('Без назначенных задач');
   await page.goto('/');
   await page
     .getByRole('textbox', { name: 'Email', exact: true })
@@ -24,6 +25,7 @@ test('AUTH: invalid credentials, session reload, logout and role isolation', asy
   await expect(page.getByRole('alert')).toContainText('Проверьте email и пароль');
   await signIn(page, 'manager');
   await expect(page.getByRole('button', { name: 'Новый объект', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: privateSite.name, exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('button', { name: 'Новый объект', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Аккаунт', exact: true }).click();
@@ -31,6 +33,7 @@ test('AUTH: invalid credentials, session reload, logout and role isolation', asy
   await expect(page.getByRole('button', { name: 'Войти', exact: true })).toBeVisible();
   await signIn(page, 'executor2');
   await expect(page.getByRole('button', { name: 'Новый объект', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: privateSite.name, exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Аккаунт', exact: true }).click();
   await expect(page.getByRole('menu', { name: 'Аккаунт' })).toContainText(
     crm.accounts.executor2.profile.full_name,

@@ -193,7 +193,7 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
     { times: 1 },
   );
   await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
-  await expect(form.getByRole('alert')).toBeVisible();
+  await expect(form.getByRole('alert')).toContainText('Не удалось связаться с сервером');
   await expect(form.getByRole('textbox', { name: 'Название', exact: true })).toHaveValue(name);
   const saved = page.waitForResponse(
     (r) => new URL(r.url()).pathname.endsWith('/rest/v1/sites') && r.request().method() === 'POST',
