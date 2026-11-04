@@ -38,6 +38,8 @@ test('FORM: whitespace validation, cancel, nested picker and keyboard focus', as
 
   await page.getByRole('button', { name: 'Новая задача', exact: true }).click();
   const taskForm = page.getByRole('dialog', { name: 'Новая задача', exact: true });
+  await expect(taskForm.locator('label[for="task-site"]')).toHaveText('Объект *');
+  await expect(taskForm.locator('label[for="task-assignee"]')).toHaveText('Исполнитель *');
   await taskForm.getByRole('textbox', { name: 'Название', exact: true }).fill('   ');
   const pickerTrigger = page.getByRole('button', { name: /^Исполнитель:/ });
   await pickerTrigger.click();

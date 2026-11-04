@@ -162,55 +162,65 @@ export function TaskForm({
             />
           )}
         </FormField>
-        <SearchableSelect
-          id="task-site"
-          label="Объект"
-          placeholder="Выберите объект"
-          allowEmpty={false}
-          value={siteId}
-          selectedLabel={selectedSite.data?.name}
-          onChange={setSiteId}
-          options={sites.data?.rows.map((row) => ({ value: row.id, label: row.name })) ?? []}
-          search={siteSearch}
-          onSearch={(value) => {
-            setSiteSearch(value);
-            setSitePage(0);
-          }}
-          offset={sitePage * 20}
-          pageSize={20}
-          total={sites.data?.count}
-          onPage={(offset) => setSitePage(offset / 20)}
-          loading={sites.isPending}
-          error={sites.isError ? 'Не удалось загрузить объекты' : undefined}
-          onRetry={() => void sites.refetch()}
-          disabled={save.isPending}
-        />
-        <SearchableSelect
-          id="task-assignee"
-          label="Исполнитель"
-          placeholder="Выберите исполнителя"
-          allowEmpty={false}
-          value={assigneeId}
-          selectedLabel={
-            selectedPerson.data?.full_name ??
-            (assigneeId === task?.assignee_id ? task?.assignee?.full_name : undefined)
-          }
-          onChange={setAssigneeId}
-          options={people.data?.rows.map((row) => ({ value: row.id, label: row.full_name })) ?? []}
-          search={peopleSearch}
-          onSearch={(value) => {
-            setPeopleSearch(value);
-            setPeoplePage(0);
-          }}
-          offset={peoplePage * 20}
-          pageSize={20}
-          total={people.data?.count}
-          onPage={(offset) => setPeoplePage(offset / 20)}
-          loading={people.isPending}
-          error={people.isError ? 'Не удалось загрузить исполнителей' : undefined}
-          onRetry={() => void people.refetch()}
-          disabled={save.isPending}
-        />
+        <FormField id="task-site" label="Объект" required>
+          {() => (
+            <SearchableSelect
+              id="task-site"
+              label="Объект"
+              placeholder="Выберите объект"
+              allowEmpty={false}
+              value={siteId}
+              selectedLabel={selectedSite.data?.name}
+              onChange={setSiteId}
+              options={sites.data?.rows.map((row) => ({ value: row.id, label: row.name })) ?? []}
+              search={siteSearch}
+              onSearch={(value) => {
+                setSiteSearch(value);
+                setSitePage(0);
+              }}
+              offset={sitePage * 20}
+              pageSize={20}
+              total={sites.data?.count}
+              onPage={(offset) => setSitePage(offset / 20)}
+              loading={sites.isPending}
+              error={sites.isError ? 'Не удалось загрузить объекты' : undefined}
+              onRetry={() => void sites.refetch()}
+              disabled={save.isPending}
+            />
+          )}
+        </FormField>
+        <FormField id="task-assignee" label="Исполнитель" required>
+          {() => (
+            <SearchableSelect
+              id="task-assignee"
+              label="Исполнитель"
+              placeholder="Выберите исполнителя"
+              allowEmpty={false}
+              value={assigneeId}
+              selectedLabel={
+                selectedPerson.data?.full_name ??
+                (assigneeId === task?.assignee_id ? task?.assignee?.full_name : undefined)
+              }
+              onChange={setAssigneeId}
+              options={
+                people.data?.rows.map((row) => ({ value: row.id, label: row.full_name })) ?? []
+              }
+              search={peopleSearch}
+              onSearch={(value) => {
+                setPeopleSearch(value);
+                setPeoplePage(0);
+              }}
+              offset={peoplePage * 20}
+              pageSize={20}
+              total={people.data?.count}
+              onPage={(offset) => setPeoplePage(offset / 20)}
+              loading={people.isPending}
+              error={people.isError ? 'Не удалось загрузить исполнителей' : undefined}
+              onRetry={() => void people.refetch()}
+              disabled={save.isPending}
+            />
+          )}
+        </FormField>
         <SaveActions
           pending={save.isPending}
           error={save.error}
