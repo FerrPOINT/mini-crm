@@ -6,12 +6,13 @@
   "packageManager": "pnpm@10.28.1",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5177 --strictPort",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tests/e2e/tsconfig.json",
     "build": "pnpm typecheck && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5177 --strictPort",
     "test": "vitest run",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
-    "test:api": "node --env-file=.env.local --test tests/security.test.mjs"
+    "test:api": "node --env-file=.env.local --test tests/security.test.mjs",
+    "test:e2e": "node --env-file=.env.local node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.2.1",
@@ -32,6 +33,7 @@
     "tailwind-merge": "3.7.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.1.0",
     "@types/node": "^24.0.0",
     "@types/react": "19.3.0",
