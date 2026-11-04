@@ -93,6 +93,7 @@ docker compose --env-file .env.local -f deploy/compose.yml logs tunnel
 - [Объяснение для руководителя](docs/explanation.md).
 - [Решения и допущения](docs/decisions.md).
 - [Полный пользовательский workflow и автотесты](docs/workflow.md).
+- [Задача по полному циклу: требования → план → реализация/ревью → проверки → сдача](docs/tasks/mini-crm/current-stage.md).
 
 ## Браузерные автотесты
 
