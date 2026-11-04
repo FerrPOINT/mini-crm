@@ -214,7 +214,7 @@ function TaskList({ siteId }: { siteId?: string }) {
       {tasks.data.rows.length === 0 ? (
         <EmptyState message="Задач пока нет" />
       ) : (
-        <Table>
+        <Table className="task-table">
           <TableHeader>
             <TableRow>
               <TableHead>Задача</TableHead>
