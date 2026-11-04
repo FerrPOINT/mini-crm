@@ -57,7 +57,7 @@ export function Pagination({
 
 export function Back({ to, children }: { to: string; children: ReactNode }) {
   return (
-    <Button asChild variant="ghost">
+    <Button asChild variant="ghost" size="sm" className="justify-self-start">
       <Link to={to}>
         <ArrowLeft size={16} aria-hidden />
         {children}

@@ -136,33 +136,35 @@ function SiteDetails({ siteId }: { siteId: string }) {
     );
   return (
     <>
-      <Back to="/sites">Все объекты</Back>
-      <PageHeader
-        title={site.data.name}
-        context={site.data.address}
-        actions={
-          profile.role === 'manager' && (
-            <ActionGroup>
-              <Button variant="outline" onClick={() => setEditing(true)}>
-                <Pencil size={16} aria-hidden />
-                Редактировать
-              </Button>
-              <ConfirmAction
-                title="Удалить объект?"
-                description="Объект и все его задачи исчезнут из рабочих списков. История сохранится в базе."
-                confirmLabel="Удалить объект"
-                confirmVariant="destructive"
-                variant="ghost"
-                isPending={deletion.isPending}
-                error={deletion.error ? message(deletion.error) : null}
-                onConfirm={() => deletion.mutateAsync()}
-              >
-                Удалить
-              </ConfirmAction>
-            </ActionGroup>
-          )
-        }
-      />
+      <div className="detail-heading">
+        <Back to="/sites">Все объекты</Back>
+        <PageHeader
+          title={site.data.name}
+          context={site.data.address}
+          actions={
+            profile.role === 'manager' && (
+              <ActionGroup>
+                <Button variant="outline" onClick={() => setEditing(true)}>
+                  <Pencil size={16} aria-hidden />
+                  Редактировать
+                </Button>
+                <ConfirmAction
+                  title="Удалить объект?"
+                  description="Объект и все его задачи исчезнут из рабочих списков. История сохранится в базе."
+                  confirmLabel="Удалить объект"
+                  confirmVariant="destructive"
+                  variant="ghost"
+                  isPending={deletion.isPending}
+                  error={deletion.error ? message(deletion.error) : null}
+                  onConfirm={() => deletion.mutateAsync()}
+                >
+                  Удалить
+                </ConfirmAction>
+              </ActionGroup>
+            )
+          }
+        />
+      </div>
       <ContentSection>
         <SectionHeader
           title="Задачи объекта"
@@ -306,31 +308,33 @@ function TaskDetails({ taskId }: { taskId: string }) {
   const actions = availableActions(data, profile);
   return (
     <>
-      <Back to={`/sites/${data.site_id}`}>К объекту</Back>
-      <PageHeader
-        title={data.title}
-        actions={
-          profile.role === 'manager' && (
-            <ActionGroup>
-              <Button variant="outline" disabled={!site.data} onClick={() => setEditing(true)}>
-                Редактировать
-              </Button>
-              <ConfirmAction
-                title="Удалить задачу?"
-                description="Задача исчезнет из рабочих списков. История сохранится в базе."
-                confirmLabel="Удалить задачу"
-                confirmVariant="destructive"
-                variant="ghost"
-                isPending={deletion.isPending}
-                error={deletion.error ? message(deletion.error) : null}
-                onConfirm={() => deletion.mutateAsync()}
-              >
-                Удалить
-              </ConfirmAction>
-            </ActionGroup>
-          )
-        }
-      />
+      <div className="detail-heading">
+        <Back to={`/sites/${data.site_id}`}>К объекту</Back>
+        <PageHeader
+          title={data.title}
+          actions={
+            profile.role === 'manager' && (
+              <ActionGroup>
+                <Button variant="outline" disabled={!site.data} onClick={() => setEditing(true)}>
+                  Редактировать
+                </Button>
+                <ConfirmAction
+                  title="Удалить задачу?"
+                  description="Задача исчезнет из рабочих списков. История сохранится в базе."
+                  confirmLabel="Удалить задачу"
+                  confirmVariant="destructive"
+                  variant="ghost"
+                  isPending={deletion.isPending}
+                  error={deletion.error ? message(deletion.error) : null}
+                  onConfirm={() => deletion.mutateAsync()}
+                >
+                  Удалить
+                </ConfirmAction>
+              </ActionGroup>
+            )
+          }
+        />
+      </div>
       <div className="task-layout">
         <div className="form-stack">
           <Card>
