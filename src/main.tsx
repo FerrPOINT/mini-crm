@@ -10,7 +10,8 @@ import './styles.css';
 void i18n.init({
   lng: 'ru',
   fallbackLng: 'ru',
-  resources: pdlcLocales,
+  defaultNS: 'base',
+  resources: { ru: { base: pdlcLocales.ru }, en: { base: pdlcLocales.en } },
   interpolation: { escapeValue: false },
 });
 createRoot(document.getElementById('root')!).render(
