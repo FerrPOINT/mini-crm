@@ -27,7 +27,7 @@ import {
   TableCell,
   Textarea,
   TextLink,
-} from '@pdlc/ui/ui';
+} from './ui';
 import { api } from './api';
 import { availableActions, formatDate, statusLabels, type Status } from './domain';
 import { useProfile } from './session';

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { FormField, Input, Textarea, SearchableSelect } from '@pdlc/ui/ui';
+import { FormField, Input, Textarea, SearchableSelect } from './ui';
 import { api } from './api';
 import type { Site, Task } from './domain';
 import { FormModal, SaveActions } from './components';

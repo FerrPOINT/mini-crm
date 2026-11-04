@@ -1,0 +1,18 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "delete": "Delete",
+    "theme": "Theme: {{theme}}",
+    "creating": "Creating…",
+    "loading": "Loading…",
+    "edit": "Edit",
+    "saving": "Saving…",
+    "unassigned": "Unassigned",
+    "user": "User",
+    "empty": "No data",
+    "unknownError": "Could not load data"
+  }
+}

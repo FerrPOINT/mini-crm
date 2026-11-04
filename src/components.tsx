@@ -11,7 +11,7 @@ import {
   Notice,
   ActionGroup,
   OffsetPageNavigation,
-} from '@pdlc/ui/ui';
+} from './ui';
 import { statusLabels, type Status } from './domain';
 
 export function message(error: unknown) {

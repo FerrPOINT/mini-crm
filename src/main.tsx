@@ -2,8 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 import i18n from 'i18next';
-import { pdlcLocales } from '@pdlc/ui/i18n';
-import { ThemeProvider } from '@pdlc/ui/lib';
+import { uiLocales } from './ui/i18n';
+import { ThemeProvider } from './ui/lib/theme';
 import { App } from './App';
 import './styles.css';
 
@@ -11,7 +11,7 @@ void i18n.init({
   lng: 'ru',
   fallbackLng: 'ru',
   defaultNS: 'base',
-  resources: { ru: { base: pdlcLocales.ru }, en: { base: pdlcLocales.en } },
+  resources: { ru: { base: uiLocales.ru }, en: { base: uiLocales.en } },
   interpolation: { escapeValue: false },
 });
 createRoot(document.getElementById('root')!).render(

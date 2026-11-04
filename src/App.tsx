@@ -6,8 +6,7 @@ import { Building2, ClipboardList, HardHat } from 'lucide-react';
 import {
   AccountMenu,
   AppShell,
-  PlatformHeader,
-  PlatformServicesProvider,
+  AppHeader,
   ThemeToggle,
   Button,
   Input,
@@ -21,7 +20,7 @@ import {
   LoadingState,
   ErrorState,
   EmptyState,
-} from '@pdlc/ui/ui';
+} from './ui';
 import { db, configured } from './supabase';
 import { api } from './api';
 import { roleLabels } from './domain';
@@ -201,40 +200,38 @@ function ProfileGate({ id }: { id: string }) {
     );
   return (
     <ProfileContext.Provider value={profile.data}>
-      <PlatformServicesProvider catalogUrl={null}>
-        <Routes>
-          <Route element={<Shell />}>
-            <Route
-              index
-              element={
-                <Navigate to={profile.data.role === 'executor' ? '/my-tasks' : '/sites'} replace />
-              }
-            />
-            <Route path="sites" element={<SitesPage />} />
-            <Route path="sites/:siteId" element={<SitePage />} />
-            <Route path="tasks/:taskId" element={<TaskPage />} />
-            <Route
-              path="my-tasks"
-              element={
-                profile.data.role === 'executor' ? <TasksPage /> : <Navigate to="/sites" replace />
-              }
-            />
-            <Route
-              path="*"
-              element={
-                <EmptyState
-                  message="Страница не найдена"
-                  action={
-                    <Button asChild>
-                      <Link to="/">На главную</Link>
-                    </Button>
-                  }
-                />
-              }
-            />
-          </Route>
-        </Routes>
-      </PlatformServicesProvider>
+      <Routes>
+        <Route element={<Shell />}>
+          <Route
+            index
+            element={
+              <Navigate to={profile.data.role === 'executor' ? '/my-tasks' : '/sites'} replace />
+            }
+          />
+          <Route path="sites" element={<SitesPage />} />
+          <Route path="sites/:siteId" element={<SitePage />} />
+          <Route path="tasks/:taskId" element={<TaskPage />} />
+          <Route
+            path="my-tasks"
+            element={
+              profile.data.role === 'executor' ? <TasksPage /> : <Navigate to="/sites" replace />
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <EmptyState
+                message="Страница не найдена"
+                action={
+                  <Button asChild>
+                    <Link to="/">На главную</Link>
+                  </Button>
+                }
+              />
+            }
+          />
+        </Route>
+      </Routes>
     </ProfileContext.Provider>
   );
 }
@@ -259,14 +256,11 @@ function Shell() {
   }
   return (
     <AppShell
-      currentServiceKey="mini-crm"
       title="Стройка"
       navigation={navigation}
       collapsibleSidebar
       renderHeader={(trigger) => (
-        <PlatformHeader
-          currentServiceKey="mini-crm"
-          serviceSwitcher={false}
+        <AppHeader
           leading={
             <>
               {trigger}

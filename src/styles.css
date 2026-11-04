@@ -1,7 +1,6 @@
 @import 'tailwindcss';
-@import '@pdlc/ui/tokens.css';
-@import '@pdlc/ui/fonts.css';
-@source "../node_modules/@pdlc/ui/src";
+@import './ui/styles/tokens.css';
+@source './ui';
 
 html {
   min-width: 320px;
