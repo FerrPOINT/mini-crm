@@ -61,7 +61,7 @@ test('FLOW: create, edit, assign, rework, accept and delete through UI', async (
     );
     await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
     const response = await saved;
-    const [site] = await response.json();
+    const site = await response.json();
     crm.siteIds.push(site.id);
     expect(response.ok()).toBe(true);
     await expect(form).toBeHidden();

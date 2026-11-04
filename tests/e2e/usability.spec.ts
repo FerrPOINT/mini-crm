@@ -172,9 +172,10 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
   roles,
 }) => {
   const page = await roles.open('manager');
-  await page.route('**/rest/v1/sites?*', (route) => route.abort(), { times: 1 });
+  await page.route('**/rest/v1/sites?*', (route) => route.abort());
   await page.goto('/#/sites');
   await expect(page.getByRole('alert')).toContainText('Не удалось загрузить объекты');
+  await page.unroute('**/rest/v1/sites?*');
   await page.getByRole('button', { name: 'Повторить', exact: true }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Объекты', exact: true })).toBeVisible();
@@ -199,7 +200,7 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
   );
   await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
   const response = await saved;
-  const [site] = await response.json();
+  const site = await response.json();
   crm.siteIds.push(site.id);
   expect(response.ok()).toBe(true);
   await expect(form).toBeHidden();
@@ -257,11 +258,12 @@ test('HISTORY: failed audit read can be retried independently of the task', asyn
   const site = await crm.site();
   const task = await crm.task(site.id);
   const page = await roles.open('executor1');
-  await page.route('**/rest/v1/task_history?*', (route) => route.abort(), { times: 1 });
+  await page.route('**/rest/v1/task_history?*', (route) => route.abort());
   await page.goto(`/#/tasks/${task.id}`);
   await taskStatus(page, 'Новая');
   await expect(page.getByRole('alert')).toContainText('Не удалось загрузить историю');
   await expect(page.getByRole('button', { name: 'Взять в работу', exact: true })).toBeVisible();
+  await page.unroute('**/rest/v1/task_history?*');
   await page.getByRole('button', { name: 'Повторить', exact: true }).click();
   await expect(page.locator('.history-list li')).toHaveCount(1);
   await expect(page.getByRole('alert')).toHaveCount(0);

@@ -45,7 +45,25 @@ async function authenticate(baseURL: string) {
           },
         },
       });
-      const auth = await client.auth.signInWithPassword(credentials(actor));
+      // Fixture setup can use the installation's private Auth endpoint. UI login
+      // still goes through Nginx, including its public brute-force protection.
+      const privateAuth = process.env.SUPABASE_ADMIN_AUTH_URL;
+      let auth;
+      if (privateAuth) {
+        const response = await fetch(`${privateAuth}/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: required('VITE_SUPABASE_ANON_KEY'),
+          },
+          body: JSON.stringify(credentials(actor)),
+        });
+        if (!response.ok)
+          throw new Error(`Fixture sign-in failed for ${actor} (${response.status})`);
+        auth = await client.auth.setSession(await response.json());
+      } else {
+        auth = await client.auth.signInWithPassword(credentials(actor));
+      }
       if (auth.error) throw new Error(`Test sign-in failed for ${actor}: ${auth.error.message}`);
       const { user } = auth.data;
       if (!user) throw new Error(`No authenticated user: ${actor}`);
