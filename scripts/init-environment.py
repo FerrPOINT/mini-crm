@@ -26,6 +26,8 @@ anon = token('anon')
 values = {
     'PUBLIC_URL': options.public_url.rstrip('/'),
     'POSTGRES_PASSWORD': secrets.token_hex(24), 'JWT_SECRET': secret,
+    'AUTH_DB_PASSWORD': secrets.token_hex(24),
+    'REST_DB_PASSWORD': secrets.token_hex(24),
     'VITE_SUPABASE_URL': '/api', 'VITE_SUPABASE_ANON_KEY': anon,
     'SUPABASE_SERVICE_ROLE_KEY': token('service_role'),
     'SUPABASE_ADMIN_AUTH_URL': 'http://127.0.0.1:54329',

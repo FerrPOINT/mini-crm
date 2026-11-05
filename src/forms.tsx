@@ -1,15 +1,21 @@
 import { useState, type FormEvent } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FormField, Input, Textarea, SearchableSelect } from './ui';
 import { api } from './api';
+import { refreshQueries } from './query-client';
 import type { Site, Task } from './domain';
 import { FormModal, SaveActions } from './components';
 
 export function SiteForm({ site, onClose }: { site?: Site; onClose: () => void }) {
+  const client = useQueryClient();
+  const [draftId] = useState(() => crypto.randomUUID());
   const [errors, setErrors] = useState<{ name?: string; address?: string }>({});
   const save = useMutation({
-    mutationFn: (values: Pick<Site, 'name' | 'address'>) => api.saveSite(values, site?.id),
+    mutationFn: (values: Pick<Site, 'name' | 'address'>) =>
+      site ? api.updateSite(site.id, values) : api.createSite(draftId, values),
     onSuccess: onClose,
+    onSettled: () =>
+      refreshQueries(client, [['sites'], ['site-options'], ['site', site?.id ?? draftId]]),
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -80,6 +86,8 @@ export function TaskForm({
   site: Site;
   onClose: () => void;
 }) {
+  const client = useQueryClient();
+  const [draftId] = useState(() => crypto.randomUUID());
   const [titleError, setTitleError] = useState<string>();
   const [siteId, setSiteId] = useState(task?.site_id ?? site.id);
   const [assigneeId, setAssigneeId] = useState(task?.assignee_id ?? '');
@@ -108,8 +116,15 @@ export function TaskForm({
   });
   const save = useMutation({
     mutationFn: (values: Pick<Task, 'title' | 'description' | 'site_id' | 'assignee_id'>) =>
-      api.saveTask(values, task?.id),
+      task ? api.updateTask(task, values) : api.createTask(draftId, values),
     onSuccess: onClose,
+    onSettled: () =>
+      refreshQueries(client, [
+        ['tasks'],
+        ['task', task?.id ?? draftId],
+        ['history', task?.id ?? draftId],
+        ['sites'],
+      ]),
   });
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

@@ -1,15 +1,13 @@
-import { MutationCache, QueryClient } from '@tanstack/react-query';
+import { QueryClient, type QueryKey } from '@tanstack/react-query';
 
 export function createQueryClient() {
-  const client = new QueryClient({
+  return new QueryClient({
     defaultOptions: { queries: { retry: false, staleTime: 0 }, mutations: { retry: false } },
-    mutationCache: new MutationCache({
-      onSuccess: async () => {
-        // Initial reads can still contain a snapshot from before the committed write.
-        await client.cancelQueries();
-        await client.invalidateQueries();
-      },
-    }),
   });
-  return client;
+}
+
+export async function refreshQueries(client: QueryClient, keys: readonly QueryKey[]) {
+  // Cancel snapshots started before the write before fetching the committed state.
+  await Promise.all(keys.map((queryKey) => client.cancelQueries({ queryKey })));
+  await Promise.all(keys.map((queryKey) => client.invalidateQueries({ queryKey })));
 }

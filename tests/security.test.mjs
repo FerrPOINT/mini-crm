@@ -30,14 +30,17 @@ async function makeTask(
   site = fixture.sites[0],
   title = 'Проверка доступа',
 ) {
+  const id = randomUUID();
+  fixture.tasks.push(id);
   const data = checked(
-    await manager
-      .from('tasks')
-      .insert({ title, description: '', site_id: site, assignee_id: assignee })
-      .select()
-      .single(),
+    await manager.rpc('create_task', {
+      p_id: id,
+      p_title: title,
+      p_description: '',
+      p_site_id: site,
+      p_assignee_id: assignee,
+    }),
   );
-  fixture.tasks.push(data.id);
   return data;
 }
 async function transition(client, taskId, from, to, comment = '') {
@@ -58,16 +61,17 @@ before(async () => {
   managerId = checked(await manager.auth.getUser()).user.id;
   executor1Id = checked(await executor1.auth.getUser()).user.id;
   executor2Id = checked(await executor2.auth.getUser()).user.id;
-  for (let index = 0; index < 3; index++)
-    fixture.sites.push(
-      checked(
-        await manager
-          .from('sites')
-          .insert({ name: `QA ${randomUUID()}`, address: 'Тестовый адрес' })
-          .select()
-          .single(),
-      ).id,
+  for (let index = 0; index < 3; index++) {
+    const id = randomUUID();
+    fixture.sites.push(id);
+    checked(
+      await manager.rpc('create_site', {
+        p_id: id,
+        p_name: `QA ${id}`,
+        p_address: 'Тестовый адрес',
+      }),
     );
+  }
 });
 after(async () => {
   if (fixture.tasks.length) {
@@ -152,9 +156,17 @@ test('all six permitted transitions and authoritative audit attribution', async 
   const task = await makeTask();
   checked(await transition(executor1, task.id, 'new', 'in_progress', 'Начинаю'));
   checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
-  for (const blank of [null, '', '   ', '\t\n\r '])
+  for (const blank of [null, '', '   ', '\t\n\r ', '\uFEFF', '\u00A0\u2003\u3000'])
     await denied(transition(manager, task.id, 'in_review', 'rework', blank));
-  checked(await transition(manager, task.id, 'in_review', 'rework', ' \tИсправить крепления\r\n'));
+  checked(
+    await transition(
+      manager,
+      task.id,
+      'in_review',
+      'rework',
+      '\uFEFF \tИсправить крепления\r\n\uFEFF',
+    ),
+  );
   checked(await transition(executor1, task.id, 'rework', 'in_progress'));
   checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
   checked(await transition(manager, task.id, 'in_review', 'accepted'));
@@ -282,7 +294,16 @@ test('concurrent duplicate transitions write one history event; stale requests f
 test('reassignment transfers visibility and history; deletion hides data but preserves audit', async () => {
   const task = await makeTask();
   checked(await transition(executor1, task.id, 'new', 'in_progress'));
-  checked(await manager.from('tasks').update({ assignee_id: executor2Id }).eq('id', task.id));
+  checked(
+    await manager.rpc('update_task', {
+      p_task_id: task.id,
+      p_expected_site_id: task.site_id,
+      p_site_id: task.site_id,
+      p_title: task.title,
+      p_description: task.description,
+      p_assignee_id: executor2Id,
+    }),
+  );
   assert.equal(checked(await executor1.from('tasks').select('id').eq('id', task.id)).length, 0);
   assert.equal(
     checked(await executor1.from('task_history').select('id').eq('task_id', task.id)).length,
@@ -310,5 +331,87 @@ test('reassignment transfers visibility and history; deletion hides data but pre
     manager
       .from('tasks')
       .insert({ title: 'Deleted site', site_id: fixture.sites[2], assignee_id: executor1Id }),
+  );
+});
+
+test('creation retries return one record and one event; conflicting reuse cannot overwrite', async () => {
+  const id = randomUUID();
+  fixture.sites.push(id);
+  const args = { p_id: id, p_name: `QA ${id}`, p_address: 'Retry fixture' };
+  const responses = await Promise.all([
+    manager.rpc('create_site', args),
+    manager.rpc('create_site', args),
+  ]);
+  for (const response of responses) assert.equal(checked(response).id, id);
+  assert.equal(checked(await manager.from('sites').select('id').eq('id', id)).length, 1);
+  assert.equal(
+    (await denied(manager.rpc('create_site', { ...args, p_name: 'Changed' }))).error.code,
+    'PT409',
+  );
+  const taskId = randomUUID();
+  fixture.tasks.push(taskId);
+  const taskArgs = {
+    p_id: taskId,
+    p_title: 'Retry',
+    p_description: '',
+    p_site_id: id,
+    p_assignee_id: executor1Id,
+  };
+  for (const response of await Promise.all([
+    manager.rpc('create_task', taskArgs),
+    manager.rpc('create_task', taskArgs),
+  ]))
+    assert.equal(checked(response).id, taskId);
+  checked(await transition(executor1, taskId, 'new', 'in_progress'));
+  assert.equal(checked(await manager.rpc('create_task', taskArgs)).status, 'in_progress');
+  assert.equal(
+    checked(await manager.from('task_history').select('id').eq('task_id', taskId)).length,
+    2,
+  );
+  assert.equal(
+    (await denied(manager.rpc('create_task', { ...taskArgs, p_title: 'Changed' }))).error.code,
+    'PT409',
+  );
+  checked(await manager.rpc('delete_site', { p_site_id: id }));
+  await denied(manager.rpc('create_site', args));
+  await denied(manager.rpc('create_task', taskArgs));
+});
+
+test('command permissions and stale moves cannot bypass field or parent rules', async () => {
+  const task = await makeTask();
+  const args = {
+    p_task_id: task.id,
+    p_expected_site_id: task.site_id,
+    p_site_id: fixture.sites[1],
+    p_title: task.title,
+    p_description: task.description,
+    p_assignee_id: executor1Id,
+  };
+  for (const client of [anonymous, executor1, executor2]) {
+    await denied(
+      client.rpc('create_site', {
+        p_id: randomUUID(),
+        p_name: 'Forbidden',
+        p_address: 'Forbidden',
+      }),
+    );
+    await denied(
+      client.rpc('create_task', {
+        p_id: randomUUID(),
+        p_title: 'Forbidden',
+        p_description: '',
+        p_site_id: task.site_id,
+        p_assignee_id: executor1Id,
+      }),
+    );
+    await denied(client.rpc('update_task', args));
+  }
+  await denied(manager.from('tasks').update({ title: 'Bypass' }).eq('id', task.id));
+  await denied(manager.from('sites').insert({ name: 'Bypass', address: 'Bypass' }));
+  checked(await manager.rpc('update_task', args));
+  assert.equal((await denied(manager.rpc('update_task', args))).error.code, 'PT409');
+  assert.equal(
+    checked(await manager.from('tasks').select('site_id').eq('id', task.id).single()).site_id,
+    fixture.sites[1],
   );
 });

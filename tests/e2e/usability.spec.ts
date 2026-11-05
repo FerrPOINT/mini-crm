@@ -187,7 +187,7 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
   await form.getByRole('textbox', { name: 'Название', exact: true }).fill(name);
   await form.getByRole('textbox', { name: 'Адрес', exact: true }).fill('Тестовый адрес');
   await page.route(
-    '**/rest/v1/sites?*',
+    '**/rest/v1/rpc/create_site',
     async (route) => {
       if (route.request().method() === 'POST') await route.abort();
       else await route.continue();
@@ -198,7 +198,9 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
   await expect(form.getByRole('alert')).toContainText('Не удалось связаться с сервером');
   await expect(form.getByRole('textbox', { name: 'Название', exact: true })).toHaveValue(name);
   const saved = page.waitForResponse(
-    (r) => new URL(r.url()).pathname.endsWith('/rest/v1/sites') && r.request().method() === 'POST',
+    (r) =>
+      new URL(r.url()).pathname.endsWith('/rest/v1/rpc/create_site') &&
+      r.request().method() === 'POST',
   );
   await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
   const response = await saved;
@@ -207,6 +209,79 @@ test('ERROR: network failures are explicit; retries keep the user input', async 
   expect(response.ok()).toBe(true);
   await expect(form).toBeHidden();
   await expect(page.getByRole('link', { name, exact: true })).toBeVisible();
+});
+
+test('RETRY: lost creation response does not duplicate a site or break the session', async ({
+  crm,
+  roles,
+}) => {
+  const page = await roles.open('manager');
+  await page.goto('/#/sites');
+  await expect(page.getByRole('button', { name: 'Аккаунт', exact: true })).toBeVisible();
+  // A write must not refetch the session profile and turn this unrelated failure into logout.
+  await page.route('**/rest/v1/profiles?*', (route) => route.abort());
+  await page.getByRole('button', { name: 'Новый объект', exact: true }).click();
+  const form = page.getByRole('dialog', { name: 'Новый объект', exact: true });
+  const name = `${crm.prefix} Потерянный ответ`;
+  await form.getByRole('textbox', { name: 'Название', exact: true }).fill(name);
+  await form.getByRole('textbox', { name: 'Адрес', exact: true }).fill('Тестовый адрес');
+  await page.route(
+    '**/rest/v1/rpc/create_site',
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      const saved = await response.json();
+      crm.siteIds.push(saved.id);
+      await route.abort(); // The database committed, but the browser never received its reply.
+    },
+    { times: 1 },
+  );
+  await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(form.getByRole('alert')).toContainText('Не удалось связаться с сервером');
+  await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(form).toBeHidden();
+  await expect(page.getByRole('link', { name, exact: true })).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Аккаунт', exact: true })).toBeVisible();
+  const rows = checked(
+    await crm.accounts.manager.client.from('sites').select('id').eq('name', name),
+  );
+  expect(rows).toHaveLength(1);
+});
+
+test('RETRY-TASK: lost task creation response preserves a single task and initial event', async ({
+  crm,
+  roles,
+}) => {
+  const site = await crm.site();
+  const page = await roles.open('manager');
+  await page.goto(`/#/sites/${site.id}`);
+  await page.getByRole('button', { name: 'Новая задача', exact: true }).click();
+  const form = page.getByRole('dialog', { name: 'Новая задача', exact: true });
+  const title = `${crm.prefix} Повтор задачи`;
+  await form.getByRole('textbox', { name: 'Название', exact: true }).fill(title);
+  await choose(page, 'Исполнитель', crm.accounts.executor1.profile.full_name);
+  await page.route(
+    '**/rest/v1/rpc/create_task',
+    async (route) => {
+      const response = await route.fetch();
+      expect(response.ok()).toBe(true);
+      await route.abort();
+    },
+    { times: 1 },
+  );
+  await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(form.getByRole('alert')).toContainText('Не удалось связаться с сервером');
+  await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
+  await expect(form).toBeHidden();
+  await expect(page.getByRole('link', { name: title, exact: true })).toHaveCount(1);
+  const tasks = checked(
+    await crm.accounts.manager.client.from('tasks').select('id').eq('site_id', site.id),
+  )!;
+  expect(tasks).toHaveLength(1);
+  const history = checked(
+    await crm.accounts.manager.client.from('task_history').select('id').eq('task_id', tasks[0].id),
+  );
+  expect(history).toHaveLength(1);
 });
 
 test('PENDING: slow save blocks duplicate submits and premature dialog dismissal', async ({

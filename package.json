@@ -12,7 +12,10 @@
     "test": "vitest run",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
     "test:api": "node --env-file=.env.local --test tests/security.test.mjs",
-    "test:e2e": "node --env-file=.env.local node_modules/@playwright/test/cli.js test"
+    "test:e2e": "node --env-file=.env.local node_modules/@playwright/test/cli.js test",
+    "db:migrate": "node --env-file=.env.local scripts/migrate.mjs",
+    "test:proxy": "node --test tests/proxy.test.mjs",
+    "test:db": "python3 tests/concurrency.py"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "1.2.1",

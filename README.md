@@ -40,6 +40,8 @@ Frontend обращается к Supabase через типизированны�
 - Смена статуса и запись истории выполняются одной транзакцией с блокировкой задачи.
 - Историю, автора и дату создания нельзя подделать обычным клиентским запросом.
 - Устаревший переход получает HTTP 409, повтор не создаёт событие истории.
+- Повтор создания после потери ответа возвращает ту же запись; ID закреплён за формой.
+- Создание/перенос задачи и удаление объекта используют единый порядок блокировок.
 - Регистрация закрыта. Серверные ключи используются только служебными скриптами.
 - Удаление скрывает записи, сохраняя историю в базе.
 
@@ -53,7 +55,9 @@ cp .env.example .env.local
 ```
 
 Укажите `VITE_SUPABASE_URL` и публичный `VITE_SUPABASE_ANON_KEY`.
-Примените файлы `supabase/migrations/` по порядку через SQL Editor или Supabase CLI.
+Свяжите проект через `pnpm exec supabase link --project-ref <project-ref>`
+и примените миграции командой `pnpm exec supabase db push`.
+Supabase CLI ведёт журнал применённых миграций; повторный запуск безопасен.
 Отключите открытую регистрацию. Создайте подтверждённых пользователей в Auth
 и соответствующие записи `profiles` с теми же UUID, именем и ролью
 `manager` или `executor`.
@@ -77,10 +81,7 @@ python3 scripts/init-environment.py
 pnpm install --frozen-lockfile
 pnpm build
 docker compose --env-file .env.local -f deploy/compose.yml up -d db auth rest
-for migration in supabase/migrations/*.sql; do
-  docker compose --env-file .env.local -f deploy/compose.yml exec -T db \
-    psql -U postgres -d postgres -v ON_ERROR_STOP=1 < "$migration" || exit 1
-done
+pnpm db:migrate
 docker compose --env-file .env.local -f deploy/compose.yml up -d web
 pnpm seed
 ```
@@ -92,8 +93,20 @@ SSH forwarding или HTTPS reverse proxy. Не передавайте паро�
 и демонстрационные пароли и не включается в Git. `SUPABASE_SERVICE_ROLE_KEY`
 не должен иметь префикс `VITE_` или попадать во frontend.
 
-При обновлении существующей установки применяйте только новые миграции.
-Не повторяйте начальную схему и не удаляйте volumes с данными.
+При обновлении существующей установки запускайте `pnpm db:migrate`:
+CLI применяет только отсутствующие в журнале миграции. Не повторяйте начальную
+схему и не удаляйте volumes с данными. Если схема была установлена вручную,
+сначала сверьте её с соответствующими миграциями, затем зарегистрируйте именно
+эти версии через `supabase migration repair --status applied`.
+
+`POSTGRES_PASSWORD`, `AUTH_DB_PASSWORD` и `REST_DB_PASSWORD` — независимые
+пароли администратора, Auth и PostgREST. Начальная установка задаёт их через
+`deploy/roles.sql`. При изменении паролей на существующей базе нужно остановить
+Auth/PostgREST, обновить окружение DB, выполнить `deploy/roles.sql` через
+`psql -U postgres -v ON_ERROR_STOP=1` внутри DB-контейнера и пересоздать оба
+сервиса. Пересоздание контейнера сохраняет именованные volumes.
+Симметричный JWT-секрет общий для Auth и PostgREST; это доверенные серверные
+компоненты, а не изолированные друг от друга контуры.
 
 Необязательный профиль `public` запускает Cloudflare Quick Tunnel:
 
@@ -101,7 +114,14 @@ SSH forwarding или HTTPS reverse proxy. Не передавайте паро�
 docker compose --env-file .env.local -f deploy/compose.yml --profile public up -d tunnel
 ```
 
-После пересоздания туннеля адрес меняется. Для постоянного адреса нужен свой
+Туннель и Nginx используют отдельную сеть `ingress`. Только из неё принимается
+`CF-Connecting-IP`; заголовок с прямого подключения игнорируется. Лимиты входа
+и обновления токена раздельные, по адресу клиента. Подсеть по умолчанию
+`172.31.255.0/29`; при конфликте с сетью сервера задайте `CRM_INGRESS_SUBNET`.
+Для другого reverse proxy нужно явно настроить его доверенную сеть и заголовок.
+
+После пересоздания туннеля адрес меняется. Обновите `PUBLIC_URL` в `.env.local`
+и пересоздайте сервис `auth`, чтобы его внешний адрес совпадал с HTTPS-адресом. Для постоянного адреса нужен свой
 домен с именованным туннелем или reverse proxy.
 
 ## Проверки
@@ -111,6 +131,8 @@ pnpm typecheck
 pnpm test
 pnpm build
 pnpm test:api
+pnpm test:db
+pnpm test:proxy
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
@@ -121,6 +143,8 @@ API и E2E запускаются на отдельном тестовом ст�
 стенда задаётся через `E2E_BASE_URL`, по умолчанию `http://127.0.0.1:8788`.
 
 [Матрица сценариев и ограничения проверки](docs/tasks/mini-crm/test-cases.md).
+`test:db` и `test:proxy` выполняются на Linux Docker-хосте этой установки;
+они проверяют порядок блокировок, разделение паролей и реальные правила Nginx.
 HTML-отчёты и снимки падений игнорируются Git; перед публикацией их нужно
 проверять на учётные данные.
 

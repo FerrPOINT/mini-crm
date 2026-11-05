@@ -116,20 +116,42 @@ export const api = {
       .abortSignal(signal!);
     return { rows: result(response) ?? [], count: response.count ?? 0 };
   },
-  async saveSite(values: Pick<Site, 'name' | 'address'>, id?: string): Promise<Site> {
-    const query = id
-      ? db().from('sites').update(values).eq('id', id)
-      : db().from('sites').insert(values);
-    return row(await query.select(siteFields).single());
+  async createSite(id: string, values: Pick<Site, 'name' | 'address'>) {
+    return row(
+      await db().rpc('create_site', { p_id: id, p_name: values.name, p_address: values.address }),
+    );
   },
-  async saveTask(
+  async updateSite(id: string, values: Pick<Site, 'name' | 'address'>) {
+    return row(await db().from('sites').update(values).eq('id', id).select(siteFields).single());
+  },
+  async createTask(
+    id: string,
     values: Pick<Task, 'title' | 'description' | 'site_id' | 'assignee_id'>,
-    id?: string,
-  ): Promise<Task> {
-    const query = id
-      ? db().from('tasks').update(values).eq('id', id)
-      : db().from('tasks').insert(values);
-    return row(await query.select(taskFields).single());
+  ) {
+    return row(
+      await db().rpc('create_task', {
+        p_id: id,
+        p_title: values.title,
+        p_description: values.description,
+        p_site_id: values.site_id,
+        p_assignee_id: values.assignee_id,
+      }),
+    );
+  },
+  async updateTask(
+    task: Task,
+    values: Pick<Task, 'title' | 'description' | 'site_id' | 'assignee_id'>,
+  ) {
+    return row(
+      await db().rpc('update_task', {
+        p_task_id: task.id,
+        p_expected_site_id: task.site_id,
+        p_title: values.title,
+        p_description: values.description,
+        p_site_id: values.site_id,
+        p_assignee_id: values.assignee_id,
+      }),
+    );
   },
   async transition(task: Task, next: Status, comment: string) {
     return result(

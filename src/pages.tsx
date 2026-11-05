@@ -29,6 +29,7 @@ import {
   TextLink,
 } from './ui';
 import { api } from './api';
+import { refreshQueries } from './query-client';
 import { availableActions, formatDate, statusLabels, type Status } from './domain';
 import { useProfile } from './session';
 import { SiteForm, TaskForm } from './forms';
@@ -117,6 +118,7 @@ export function SitePage() {
 }
 
 function SiteDetails({ siteId }: { siteId: string }) {
+  const client = useQueryClient();
   const profile = useProfile();
   const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
@@ -128,6 +130,15 @@ function SiteDetails({ siteId }: { siteId: string }) {
   const deletion = useMutation({
     mutationFn: () => api.deleteSite(siteId),
     onSuccess: () => navigate('/sites'),
+    onSettled: () =>
+      refreshQueries(client, [
+        ['sites'],
+        ['site-options'],
+        ['site', siteId],
+        ['tasks'],
+        ['task'],
+        ['history'],
+      ]),
   });
   if (site.isPending) return <LoadingState />;
   if (site.isError)
@@ -291,17 +302,14 @@ function TaskDetails({ taskId }: { taskId: string }) {
       setComment('');
       setHistoryPage(0);
     },
-    onError: async () => {
-      setHistoryPage(0);
-      await Promise.all([
-        client.invalidateQueries({ queryKey: ['task', taskId] }),
-        client.invalidateQueries({ queryKey: ['history', taskId] }),
-      ]);
-    },
+    onError: () => setHistoryPage(0),
+    onSettled: () => refreshQueries(client, [['task', taskId], ['history', taskId], ['tasks']]),
   });
   const deletion = useMutation({
     mutationFn: () => api.deleteTask(taskId),
     onSuccess: () => navigate(`/sites/${task.data!.site_id}`),
+    onSettled: () =>
+      refreshQueries(client, [['tasks'], ['task', taskId], ['history', taskId], ['sites']]),
   });
   if (task.isPending) return <LoadingState />;
   if (task.isError)

@@ -1,4 +1,4 @@
-// Database contract from supabase/migrations/202611040001_crm.sql.
+// Client database contract; keep aligned with supabase/migrations.
 type Role = 'manager' | 'executor';
 type Status = 'new' | 'in_progress' | 'in_review' | 'accepted' | 'rework';
 type ProfileRow = { id: string; full_name: string; role: Role };
@@ -42,20 +42,20 @@ export type Database = {
     Tables: {
       profiles: {
         Row: ProfileRow;
-        Insert: ProfileRow;
-        Update: Partial<ProfileRow>;
+        Insert: never;
+        Update: never;
         Relationships: [];
       };
       sites: {
         Row: SiteRow;
-        Insert: Pick<SiteRow, 'name' | 'address'>;
+        Insert: never;
         Update: Partial<Pick<SiteRow, 'name' | 'address'>>;
         Relationships: [];
       };
       tasks: {
         Row: TaskRow;
-        Insert: Pick<TaskRow, 'title' | 'description' | 'site_id' | 'assignee_id'>;
-        Update: Partial<Pick<TaskRow, 'title' | 'description' | 'site_id' | 'assignee_id'>>;
+        Insert: never;
+        Update: never;
         Relationships: [
           Relation<'tasks_site_id_fkey', 'site_id', 'sites'>,
           Relation<'tasks_assignee_id_fkey', 'assignee_id', 'profiles'>,
@@ -74,6 +74,31 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      create_site: {
+        Args: { p_id: string; p_name: string; p_address: string };
+        Returns: SiteRow;
+      };
+      create_task: {
+        Args: {
+          p_id: string;
+          p_title: string;
+          p_description: string;
+          p_site_id: string;
+          p_assignee_id: string;
+        };
+        Returns: TaskRow;
+      };
+      update_task: {
+        Args: {
+          p_task_id: string;
+          p_expected_site_id: string;
+          p_title: string;
+          p_description: string;
+          p_site_id: string;
+          p_assignee_id: string;
+        };
+        Returns: TaskRow;
+      };
       transition_task: {
         Args: {
           p_task_id: string;

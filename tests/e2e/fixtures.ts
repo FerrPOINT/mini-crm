@@ -100,31 +100,26 @@ function fixtures(accounts: Accounts, baseURL: string) {
     accounts,
     siteIds,
     async site(suffix = 'Объект') {
+      const id = randomUUID();
+      siteIds.push(id);
       const site = checked(
-        await accounts.manager.client
-          .from('sites')
-          .insert({
-            name: `${prefix} ${suffix}`,
-            address: 'Новосибирск, Тестовая, 1',
-          })
-          .select('*')
-          .single(),
+        await accounts.manager.client.rpc('create_site', {
+          p_id: id,
+          p_name: `${prefix} ${suffix}`,
+          p_address: 'Новосибирск, Тестовая, 1',
+        }),
       )!;
-      siteIds.push(site.id);
       return site;
     },
     async task(siteId: string, actor: 'executor1' | 'executor2' = 'executor1', title = 'Монтаж') {
       return checked(
-        await accounts.manager.client
-          .from('tasks')
-          .insert({
-            title: `${prefix} ${title}`,
-            description: 'Первая строка\nВторая строка',
-            site_id: siteId,
-            assignee_id: accounts[actor].profile.id,
-          })
-          .select('*')
-          .single(),
+        await accounts.manager.client.rpc('create_task', {
+          p_id: randomUUID(),
+          p_title: `${prefix} ${title}`,
+          p_description: 'Первая строка\nВторая строка',
+          p_site_id: siteId,
+          p_assignee_id: accounts[actor].profile.id,
+        }),
       )!;
     },
     async transition(

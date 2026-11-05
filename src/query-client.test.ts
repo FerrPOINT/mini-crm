@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { QueryObserver } from '@tanstack/react-query';
-import { createQueryClient } from './query-client';
+import { createQueryClient, refreshQueries } from './query-client';
 
 it('refreshes a read already in flight before a successful write', async () => {
   const client = createQueryClient();
@@ -18,7 +18,10 @@ it('refreshes a read already in flight before a successful write', async () => {
     expect(reads).toBe(1);
     const mutation = client
       .getMutationCache()
-      .build(client, { mutationFn: async () => 'accepted' });
+      .build(client, {
+        mutationFn: async () => 'accepted',
+        onSuccess: () => refreshQueries(client, [['history', 'task-a']]),
+      });
     const saving = mutation.execute(undefined);
     await new Promise((resolve) => setTimeout(resolve, 0));
     releaseOld(['created']);
@@ -41,9 +44,37 @@ it('also refreshes a previously loaded list after a write', async () => {
       mutationFn: async () => {
         rows = ['first task', 'new task'];
       },
+      onSuccess: () => refreshQueries(client, [['tasks']]),
     });
     await mutation.execute(undefined);
     expect(client.getQueryData(['tasks'])).toEqual(['first task', 'new task']);
+  } finally {
+    unsubscribe();
+    client.clear();
+  }
+});
+
+it('a successful write does not refetch an unrelated profile', async () => {
+  const client = createQueryClient();
+  let profileReads = 0;
+  const profile = new QueryObserver(client, {
+    queryKey: ['profile', 'manager'],
+    queryFn: async () => {
+      if (++profileReads > 1) throw new Error('Unrelated network failure');
+      return { role: 'manager' };
+    },
+  });
+  const unsubscribe = profile.subscribe(() => {});
+  try {
+    await profile.refetch();
+    const mutation = client.getMutationCache().build(client, {
+      mutationFn: async () => 'created',
+      onSuccess: () => refreshQueries(client, [['sites'], ['site-options']]),
+    });
+    await mutation.execute(undefined);
+    expect(profileReads).toBe(1);
+    expect(profile.getCurrentResult().isError).toBe(false);
+    expect(profile.getCurrentResult().data).toEqual({ role: 'manager' });
   } finally {
     unsubscribe();
     client.clear();

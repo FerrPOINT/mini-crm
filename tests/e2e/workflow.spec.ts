@@ -60,7 +60,8 @@ test('FLOW: create, edit, assign, rework, accept and delete through UI', async (
       .fill('Новосибирск, Строительная, 10');
     const saved = manager.waitForResponse(
       (r) =>
-        new URL(r.url()).pathname.endsWith('/rest/v1/sites') && r.request().method() === 'POST',
+        new URL(r.url()).pathname.endsWith('/rest/v1/rpc/create_site') &&
+        r.request().method() === 'POST',
     );
     await form.getByRole('button', { name: 'Сохранить', exact: true }).click();
     const response = await saved;
