@@ -5,7 +5,7 @@ CRM для управления работами на строительных �
 
 React + TypeScript · Supabase Auth · PostgreSQL · PostgREST
 
-[Демонстрация](https://reg-sensitive-cpu-governor.trycloudflare.com) ·
+[Демонстрация](https://nutritional-combined-dolls-fifth.trycloudflare.com) ·
 [Пользовательский сценарий](docs/workflow.md) ·
 [Архитектурные решения](docs/decisions.md) ·
 [Требования и проверки](docs/tasks/mini-crm/current-stage.md)
@@ -103,7 +103,7 @@ CLI применяет только отсутствующие в журнале
 пароли администратора, Auth и PostgREST. Начальная установка задаёт их через
 `deploy/roles.sql`. При изменении паролей на существующей базе нужно остановить
 Auth/PostgREST, обновить окружение DB, выполнить `deploy/roles.sql` через
-`psql -U postgres -v ON_ERROR_STOP=1` внутри DB-контейнера и пересоздать оба
+`psql -U supabase_admin -d postgres -v ON_ERROR_STOP=1` внутри DB-контейнера и пересоздать оба
 сервиса. Пересоздание контейнера сохраняет именованные volumes.
 Симметричный JWT-секрет общий для Auth и PostgREST; это доверенные серверные
 компоненты, а не изолированные друг от друга контуры.

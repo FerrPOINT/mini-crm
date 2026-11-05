@@ -27,7 +27,7 @@ def check_role_passwords():
     ]:
         # Resolve secrets inside the container; neither argv nor output contains them.
         result = subprocess.run(['docker', 'exec', 'mini-crm-db-1', 'sh', '-c',
-                                 f'PGPASSWORD="${variable}" psql -X -h 127.0.0.1 -U "$1" -d postgres -At -c "select 1"',
+                                 f'PGPASSWORD="${variable}" psql -X -h db -U "$1" -d postgres -At -c "select 1"',
                                  'test', role], capture_output=True, text=True, timeout=10)
         assert (result.returncode == 0) == allowed, f'Unexpected password boundary for {role}/{variable}'
         if not allowed:
