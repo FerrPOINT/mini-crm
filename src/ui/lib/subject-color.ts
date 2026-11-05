@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react';
-import { isHex } from './branding-colors.js';
-import { readableForeground } from './color';
+import { foreground, isHex } from './branding-colors.js';
 
 type SubjectStyle = CSSProperties & {
   '--base-subject-background': string;
@@ -15,7 +14,7 @@ export function subjectColorStyle(color: string | undefined): SubjectStyle | und
   return isHex(color)
     ? {
         '--base-subject-background': color,
-        '--base-subject-foreground': readableForeground(color),
+        '--base-subject-foreground': foreground(color),
       }
     : {
         '--base-subject-background': 'var(--color-surface-raised)',

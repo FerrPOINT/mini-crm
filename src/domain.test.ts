@@ -29,25 +29,4 @@ describe('visible task actions', () => {
     expect(availableActions(current, executor).map((action) => action.status)).toEqual(forExecutor);
     expect(availableActions(current, { ...executor, id: 'another-executor' })).toEqual([]);
   });
-  it('offers only assigned executor transitions', () => {
-    expect(availableActions(task, executor).map((action) => action.status)).toEqual([
-      'in_progress',
-    ]);
-    expect(
-      availableActions({ ...task, status: 'rework' }, executor).map((action) => action.status),
-    ).toEqual(['in_progress']);
-    expect(
-      availableActions({ ...task, status: 'in_progress' }, executor).map((action) => action.status),
-    ).toEqual(['in_review']);
-    expect(availableActions(task, { ...executor, id: 'worker-b' })).toEqual([]);
-  });
-  it('allows manager decisions only during review and leaves terminal tasks read-only', () => {
-    expect(
-      availableActions({ ...task, status: 'in_review' }, manager).map((action) => action.status),
-    ).toEqual(['accepted', 'rework']);
-    expect(availableActions(task, manager)).toEqual([]);
-    for (const actor of [manager, executor])
-      expect(availableActions({ ...task, status: 'accepted' }, actor)).toEqual([]);
-    expect(availableActions({ ...task, status: 'in_review' }, executor)).toEqual([]);
-  });
 });

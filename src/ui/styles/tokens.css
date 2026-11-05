@@ -27,7 +27,7 @@
   --text-2xl--line-height: calc(var(--base-line-body) + 0.75rem);
   --color-danger-foreground: var(--color-destructive-foreground);
   --color-danger-strong: var(--color-danger);
-  /* Compatibility aliases for one release. */
+  /* Token aliases used by UI components. */
   --color-primary: var(--color-accent);
   --color-primary-foreground: var(--color-accent-foreground);
   --color-secondary: var(--color-surface-raised);

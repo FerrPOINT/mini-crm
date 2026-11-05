@@ -14,7 +14,7 @@ const admin = create(adminKey),
   executor1 = create(key),
   executor2 = create(key),
   anonymous = create(key);
-const fixture = { sites: [], tasks: [], users: [] };
+const fixture = { sites: [], tasks: [] };
 let managerId, executor1Id, executor2Id;
 function checked(response) {
   assert.equal(response.error, null, response.error?.message);
