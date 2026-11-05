@@ -16,12 +16,10 @@ it('refreshes a read already in flight before a successful write', async () => {
   const unsubscribe = observer.subscribe(() => {});
   try {
     expect(reads).toBe(1);
-    const mutation = client
-      .getMutationCache()
-      .build(client, {
-        mutationFn: async () => 'accepted',
-        onSuccess: () => refreshQueries(client, [['history', 'task-a']]),
-      });
+    const mutation = client.getMutationCache().build(client, {
+      mutationFn: async () => 'accepted',
+      onSuccess: () => refreshQueries(client, [['history', 'task-a']]),
+    });
     const saving = mutation.execute(undefined);
     await new Promise((resolve) => setTimeout(resolve, 0));
     releaseOld(['created']);

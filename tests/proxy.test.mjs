@@ -9,7 +9,8 @@ const info = JSON.parse(docker('inspect', container))[0];
 const ingress = info.NetworkSettings.Networks['mini-crm_ingress']?.IPAddress;
 assert.ok(ingress, 'Web must use the isolated tunnel network');
 const marker = `proxy-test-${randomUUID()}`;
-const address = () => `192.0.2.${randomInt(1, 255)}`;
+const address = () =>
+  `2001:db8:${Array.from({ length: 6 }, () => randomInt(1, 0x10000).toString(16)).join(':')}`;
 
 function trusted(ip, grant = 'unsupported') {
   // Existing web container acts as a trusted ingress peer; no credentials or writes.
@@ -30,10 +31,8 @@ function trusted(ip, grant = 'unsupported') {
 
 test('trusted client IPs have separate login quotas; refresh has its own budget', () => {
   const a = address();
-  let b = address();
-  while (b === a) b = address();
-  let c = address();
-  while ([a, b].includes(c)) c = address();
+  const b = address();
+  const c = address();
   const requests = Array.from({ length: 13 }, () => trusted(a));
   assert.ok(requests.includes(429), 'Password quota must reject a burst');
   assert.equal(trusted(b), 400, 'One client must not block a different client');
