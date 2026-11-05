@@ -8,7 +8,8 @@ React + TypeScript · Supabase Auth · PostgreSQL · PostgREST
 [Демонстрация](https://demo.azhukov-dev.ru) ·
 [Пользовательский сценарий](docs/workflow.md) ·
 [Архитектурные решения](docs/decisions.md) ·
-[Требования и проверки](docs/tasks/mini-crm/current-stage.md)
+[Исходное ТЗ](docs/tasks/mini-crm/original-specification.md) ·
+[Соответствие требованиям](docs/tasks/mini-crm/current-stage.md)
 
 Демонстрация доступна по постоянному HTTPS-адресу. Учётные данные выдаются отдельно.
 

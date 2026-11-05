@@ -415,3 +415,82 @@ test('command permissions and stale moves cannot bypass field or parent rules', 
     fixture.sites[1],
   );
 });
+
+test('two managers share task visibility and attribute review history to the actual actor', async () => {
+  const second = create(key);
+  const privateAuth = process.env.SUPABASE_ADMIN_AUTH_URL;
+  const email = `qa-manager-${randomUUID()}@example.test`;
+  const password = `QA-${randomUUID()}`;
+  let userId;
+  let task;
+  try {
+    if (privateAuth) {
+      const response = await fetch(`${privateAuth}/admin/users`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, email_confirm: true }),
+      });
+      assert.ok(response.ok, `Temporary user creation failed (${response.status})`);
+      userId = (await response.json()).id;
+    } else {
+      userId = checked(await admin.auth.admin.createUser({ email, password, email_confirm: true }))
+        .user.id;
+    }
+    checked(
+      await admin
+        .from('profiles')
+        .insert({ id: userId, full_name: 'QA второй постановщик', role: 'manager' }),
+    );
+    checked(await second.auth.signInWithPassword({ email, password }));
+    task = await makeTask();
+    assert.equal(
+      checked(await second.from('tasks').select('author_id').eq('id', task.id).single()).author_id,
+      managerId,
+    );
+    checked(
+      await second.rpc('update_task', {
+        p_task_id: task.id,
+        p_expected_site_id: task.site_id,
+        p_site_id: task.site_id,
+        p_title: 'Изменено другим постановщиком',
+        p_description: task.description,
+        p_assignee_id: executor1Id,
+      }),
+    );
+    checked(await transition(executor1, task.id, 'new', 'in_progress'));
+    checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
+    checked(
+      await transition(second, task.id, 'in_review', 'rework', 'Проверил второй постановщик'),
+    );
+    checked(await transition(executor1, task.id, 'rework', 'in_progress'));
+    checked(await transition(executor1, task.id, 'in_progress', 'in_review'));
+    checked(await transition(manager, task.id, 'in_review', 'accepted'));
+    const history = checked(
+      await manager.from('task_history').select('*').eq('task_id', task.id).order('id'),
+    );
+    assert.equal(history.length, 7);
+    assert.equal(history[0].actor_id, managerId);
+    assert.equal(history[3].actor_id, userId);
+    assert.equal(history[6].actor_id, managerId);
+    checked(await second.rpc('delete_task', { p_task_id: task.id }));
+    assert.deepEqual(checked(await manager.from('tasks').select('id').eq('id', task.id)), []);
+  } finally {
+    if (task) {
+      checked(await admin.from('task_history').delete().eq('task_id', task.id));
+      checked(await admin.from('tasks').delete().eq('id', task.id));
+    }
+    checked(await second.auth.signOut({ scope: 'local' }));
+    if (userId) {
+      checked(await admin.from('profiles').delete().eq('id', userId));
+      if (privateAuth) {
+        const response = await fetch(`${privateAuth}/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminKey}` },
+        });
+        assert.ok(response.ok, `Temporary user cleanup failed (${response.status})`);
+      } else {
+        checked(await admin.auth.admin.deleteUser(userId));
+      }
+    }
+  }
+});
