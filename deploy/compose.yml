@@ -93,10 +93,9 @@ services:
       auth: { condition: service_healthy }
       rest: { condition: service_healthy }
     ports: ['${WEB_BIND:-127.0.0.1}:8788:8080']
-    networks: [default, ingress]
     environment:
-      TRUSTED_PROXY_SUBNET: ${CRM_INGRESS_SUBNET:-172.31.255.0/29}
-      NGINX_ENVSUBST_FILTER: ^TRUSTED_PROXY_SUBNET$
+      TRUSTED_PROXY_CIDR: ${TRUSTED_PROXY_CIDR:-127.0.0.1/32}
+      NGINX_ENVSUBST_FILTER: ^TRUSTED_PROXY_CIDR$
     volumes:
       - ../dist:/usr/share/nginx/html:ro
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
@@ -106,22 +105,6 @@ services:
       timeout: 5s
       retries: 5
     logging: *logging
-  tunnel:
-    image: cloudflare/cloudflared:2026.10.0
-    profiles: [public]
-    restart: unless-stopped
-    mem_limit: 128m
-    cpus: 0.5
-    depends_on:
-      web: { condition: service_healthy }
-    networks: [ingress]
-    command: [tunnel, --no-autoupdate, --protocol, http2, --url, 'http://web:8080']
-    logging: *logging
 volumes:
   db-data:
   db-config:
-networks:
-  ingress:
-    ipam:
-      config:
-        - subnet: ${CRM_INGRESS_SUBNET:-172.31.255.0/29}

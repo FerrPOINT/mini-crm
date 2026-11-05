@@ -1,0 +1,8 @@
+{
+  "certificate": {
+    "certificateFile": "/etc/xray/tls/mini-crm/fullchain.pem",
+    "keyFile": "/etc/xray/tls/mini-crm/privkey.pem",
+    "oneTimeLoading": false
+  },
+  "fallback": { "name": "demo.azhukov-dev.ru", "dest": "127.0.0.1:8080", "xver": 1 }
+}
