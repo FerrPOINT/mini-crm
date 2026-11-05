@@ -34,6 +34,7 @@ import { availableActions, formatDate, statusLabels, type Status } from './domai
 import { useProfile } from './session';
 import { SiteForm, TaskForm } from './forms';
 import { Back, Pagination, StatusBadge, message } from './components';
+import { useMediaQuery } from './ui/lib/use-media-query';
 
 export function SitesPage() {
   const profile = useProfile();
@@ -154,7 +155,7 @@ function SiteDetails({ siteId }: { siteId: string }) {
           context={site.data.address}
           actions={
             profile.role === 'manager' && (
-              <ActionGroup>
+              <ActionGroup stackOnMobile className="detail-actions">
                 <Button variant="outline" onClick={() => setEditing(true)}>
                   <Pencil size={16} aria-hidden />
                   Редактировать
@@ -206,6 +207,7 @@ export function TasksPage() {
 }
 
 function TaskList({ siteId }: { siteId?: string }) {
+  const compact = useMediaQuery('(max-width: 767px)');
   const [page, setPage] = useState(0);
   const tasks = useQuery({
     queryKey: ['tasks', siteId ?? 'mine', page],
@@ -224,6 +226,47 @@ function TaskList({ siteId }: { siteId?: string }) {
     <>
       {tasks.data.rows.length === 0 ? (
         <EmptyState message="Задач пока нет" />
+      ) : compact ? (
+        <ul className="task-cards" aria-label="Задачи">
+          {tasks.data.rows.map((task) => (
+            <Card asChild key={task.id}>
+              <li>
+                <CardContent className="task-card-content">
+                  <div className="task-card-heading">
+                    <TextLink asChild>
+                      <Link className="task-card-title" to={`/tasks/${task.id}`}>
+                        {task.title}
+                      </Link>
+                    </TextLink>
+                    <StatusBadge status={task.status} />
+                  </div>
+                  <dl className="task-card-facts">
+                    <div>
+                      <dt>{siteId ? 'Исполнитель' : 'Объект'}</dt>
+                      <dd>
+                        {siteId ? (
+                          task.assignee?.full_name
+                        ) : (
+                          <TextLink asChild>
+                            <Link className="task-card-site" to={`/sites/${task.site_id}`}>
+                              {task.site?.name}
+                            </Link>
+                          </TextLink>
+                        )}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Создана</dt>
+                      <dd>
+                        <time dateTime={task.created_at}>{formatDate(task.created_at)}</time>
+                      </dd>
+                    </div>
+                  </dl>
+                </CardContent>
+              </li>
+            </Card>
+          ))}
+        </ul>
       ) : (
         <Table className="task-table">
           <TableHeader>
@@ -326,7 +369,7 @@ function TaskDetails({ taskId }: { taskId: string }) {
           title={data.title}
           actions={
             profile.role === 'manager' && (
-              <ActionGroup>
+              <ActionGroup stackOnMobile className="detail-actions">
                 <Button variant="outline" disabled={!site.data} onClick={() => setEditing(true)}>
                   Редактировать
                 </Button>
@@ -430,7 +473,7 @@ function TaskDetails({ taskId }: { taskId: string }) {
                       {message(change.error)}
                     </Notice>
                   )}
-                  <ActionGroup>
+                  <ActionGroup stackOnMobile>
                     {actions.map((action) => (
                       <Button
                         key={action.status}

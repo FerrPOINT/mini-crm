@@ -90,6 +90,7 @@ export function FormModal({
       }}
     >
       <DialogContent
+        className="crm-form-modal"
         returnFocusRef={opener}
         closeDisabled={pending}
         onEscapeKeyDown={(event) => {
@@ -123,7 +124,7 @@ export function SaveActions({
           {message(error)}
         </Notice>
       )}
-      <ActionGroup>
+      <ActionGroup stackOnMobile>
         <Button type="submit" disabled={pending || disabled}>
           {pending ? 'Сохраняем…' : 'Сохранить'}
         </Button>

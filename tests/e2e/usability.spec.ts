@@ -61,7 +61,7 @@ test('FORM: whitespace validation, cancel, nested picker and keyboard focus', as
   ).toEqual([]);
 });
 
-test('LAYOUT: left back link, readable table, themes persist and mobile navigation closes', async ({
+test('LAYOUT: left back link, readable tasks, themes persist and mobile navigation closes', async ({
   crm,
   roles,
 }) => {
@@ -85,11 +85,11 @@ test('LAYOUT: left back link, readable table, themes persist and mobile navigati
   await expect(page.getByRole('heading', { name: site.name, exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: task.title, exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  if (page.viewportSize()!.width < 600) {
-    const table = page.locator('.base-table-scroll');
-    expect(await table.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
-    const titleCell = page.getByRole('cell', { name: task.title, exact: true });
-    expect((await titleCell.boundingBox())!.width).toBeGreaterThan(150);
+  if (page.viewportSize()!.width < 768) {
+    const cards = page.getByRole('list', { name: 'Задачи', exact: true });
+    await expect(cards).toBeVisible();
+    await expect(page.getByRole('table')).toHaveCount(0);
+    expect(await cards.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click();
     const drawer = page.getByRole('dialog', { name: 'Стройка', exact: true });
     await drawer.getByRole('link', { name: 'Объекты', exact: true }).click();
@@ -115,19 +115,23 @@ test('PAGES: tasks and history paginate at 20 without losing records', async ({ 
   for (let index = 0; index < 21; index++) await crm.task(site.id, 'executor1', `Работа ${index}`);
   const page = await roles.open('manager');
   await page.goto(`/#/sites/${site.id}`);
-  await expect(page.locator('tbody tr')).toHaveCount(20);
+  const rows =
+    page.viewportSize()!.width < 768
+      ? page.getByRole('list', { name: 'Задачи', exact: true }).getByRole('listitem')
+      : page.locator('tbody tr');
+  await expect(rows).toHaveCount(20);
   const pages = page.getByRole('navigation', { name: 'Страницы списка', exact: true });
   await expect(pages).toContainText('1–20 из 21');
-  const firstPage = await page.locator('tbody a').allTextContents();
+  const firstPage = await rows.getByRole('link').allTextContents();
   await pages.getByRole('button', { name: 'Далее', exact: true }).click();
-  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(rows).toHaveCount(1);
   await expect(pages).toContainText('21–21 из 21');
-  const lastTitle = await page.locator('tbody a').innerText();
+  const lastTitle = await rows.getByRole('link').innerText();
   expect(firstPage).not.toContain(lastTitle);
   await expect(pages.getByRole('button', { name: 'Далее', exact: true })).toBeDisabled();
   await pages.getByRole('button', { name: 'Назад', exact: true }).click();
-  await expect(page.locator('tbody tr')).toHaveCount(20);
-  expect(await page.locator('tbody a').allTextContents()).toEqual(firstPage);
+  await expect(rows).toHaveCount(20);
+  expect(await rows.getByRole('link').allTextContents()).toEqual(firstPage);
 
   const task = await crm.task(site.id, 'executor1', 'Много доработок');
   await crm.transition(task.id, 'new', 'in_progress', 'executor1');

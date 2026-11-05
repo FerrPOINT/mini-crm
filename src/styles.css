@@ -61,6 +61,54 @@ body {
 .task-table {
   min-width: 40rem;
 }
+.task-cards {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.task-card-content {
+  padding: 1rem;
+}
+.task-card-heading {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.task-card-title,
+.task-card-site {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.task-card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.task-card-facts {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+.task-card-facts > div {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.task-card-facts dt {
+  color: var(--color-text-muted);
+}
+.task-card-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 .task-facts {
   margin: 0 0 1.5rem;
   display: grid;
@@ -110,5 +158,25 @@ body {
   .task-facts > div {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.25rem;
+  }
+}
+@media (max-width: 767px) {
+  .workspace {
+    gap: 1rem;
+  }
+  .detail-actions {
+    width: 100%;
+  }
+  .base-button,
+  .base-input,
+  .base-textarea {
+    min-height: 44px;
+  }
+  .base-input,
+  .base-textarea {
+    font-size: 1rem;
+  }
+  .crm-form-modal > h2 {
+    padding-inline-end: 3rem;
   }
 }
